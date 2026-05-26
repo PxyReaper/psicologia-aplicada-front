@@ -50,6 +50,18 @@ export class SessionsComponent {
 
   dragState = signal<{ dayIdx: number; startHour: number; endHour: number } | null>(null);
 
+  sessionDragState = signal<{
+    session: SessionWithPatientDTO;
+    originalDayIdx: number;
+    targetDayIdx: number;
+    targetHour: number;
+    targetMinute: number;
+  } | null>(null);
+
+  sessionDragMoved = false;
+
+  draggedSessionId = computed(() => this.sessionDragState()?.session.id ?? 0);
+
   // Calendar state
   calendarMonth = signal(new Date().getMonth());
   calendarYear = signal(new Date().getFullYear());
@@ -238,6 +250,10 @@ export class SessionsComponent {
   }
 
   onSessionClick(s: WeeklySession): void {
+    if (this.sessionDragMoved) {
+      this.sessionDragMoved = false;
+      return;
+    }
     this.editingSession.set(s.session);
     this.showDeleteConfirm.set(false);
     const start = new Date(s.session.dateSession);
@@ -348,11 +364,43 @@ export class SessionsComponent {
     };
   }
 
+  sessionDragOverlayStyle = computed(() => {
+    const sds = this.sessionDragState();
+    if (!sds) return { display: 'none' };
+    const start = new Date(sds.session.dateSession);
+    const end = new Date(sds.session.dateSessionEnd);
+    const durationMs = end.getTime() - start.getTime();
+    const durationMin = Math.round(durationMs / 60000);
+    const heightPx = Math.max(durationMin / 60 * HOUR_HEIGHT, 25);
+    const topPx = (sds.targetHour + sds.targetMinute / 60 - START_HOUR) * HOUR_HEIGHT;
+    return { top: `${topPx}px`, height: `${heightPx}px` };
+  });
+
   startDrag(dayIdx: number, hour: number): void {
     this.dragState.set({ dayIdx, startHour: hour, endHour: hour });
   }
 
+  startSessionDrag(ws: WeeklySession, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.sessionDragMoved = false;
+    const start = new Date(ws.session.dateSession);
+    this.sessionDragState.set({
+      session: ws.session,
+      originalDayIdx: ws.dayIndex,
+      targetDayIdx: ws.dayIndex,
+      targetHour: start.getHours(),
+      targetMinute: start.getMinutes(),
+    });
+  }
+
   updateDrag(dayIdx: number, hour: number): void {
+    const sds = this.sessionDragState();
+    if (sds) {
+      this.sessionDragMoved = true;
+      this.sessionDragState.set({ ...sds, targetDayIdx: dayIdx, targetHour: hour, targetMinute: 0 });
+      return;
+    }
     const ds = this.dragState();
     if (!ds || ds.dayIdx !== dayIdx) return;
     if (hour === ds.endHour) return;
@@ -360,6 +408,12 @@ export class SessionsComponent {
   }
 
   endDrag(): void {
+    const sds = this.sessionDragState();
+    if (sds) {
+      this.sessionDragState.set(null);
+      if (this.sessionDragMoved) this.moveSession(sds);
+      return;
+    }
     const ds = this.dragState();
     if (!ds) return;
     this.dragState.set(null);
@@ -367,6 +421,41 @@ export class SessionsComponent {
     let endHour = Math.max(ds.startHour, ds.endHour);
     if (startHour === endHour) endHour = Math.min(startHour + 1, 23);
     this.openNewSessionDialog(ds.dayIdx, startHour, endHour);
+  }
+
+  private moveSession(sds: Exclude<ReturnType<typeof this.sessionDragState>, null>): void {
+    const weekStart = this.getWeekStart(this.selectedDate());
+    const targetDate = new Date(weekStart);
+    targetDate.setDate(targetDate.getDate() + sds.targetDayIdx);
+    targetDate.setHours(sds.targetHour, sds.targetMinute, 0, 0);
+
+    const originalStart = new Date(sds.session.dateSession);
+    const originalEnd = new Date(sds.session.dateSessionEnd);
+    const durationMs = originalEnd.getTime() - originalStart.getTime();
+    const targetEnd = new Date(targetDate.getTime() + durationMs);
+
+    const dto: SessionRequestDTO = {
+      dateSession: this.toSpanishLocalISO(targetDate),
+      dateSessionEnd: this.toSpanishLocalISO(targetEnd),
+      observatory: sds.session.observation,
+      observatorySummary: sds.session.observationSummary,
+      idPatient: sds.session.patientId,
+    };
+
+    this.saving.set(true);
+    this.sessionsService.update(sds.session.id, dto).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.toast.success('Sesión reubicada');
+        this.sessionDragMoved = false;
+        this.weeklySessions.set([]);
+        this.loadWeek();
+      },
+      error: () => {
+        this.saving.set(false);
+        this.toast.error('Error al reubicar la sesión');
+      },
+    });
   }
 
   private openNewSessionDialog(dayIdx: number, startHour: number, endHourVal: number): void {
