@@ -1,0 +1,118 @@
+<app-toast-container />
+<div class="p-4 md:p-6">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-lg font-bold text-slate-800">Usuarios</h1>
+    <button (click)="newUser()"
+            class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary-light transition-colors cursor-pointer">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+      Nuevo Usuario
+    </button>
+  </div>
+
+  @if (loading()) {
+    <div class="flex justify-center py-12">
+      <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+    </div>
+  } @else {
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200">
+              <th class="text-start px-4 py-3 font-medium text-slate-600">Email</th>
+              <th class="text-start px-4 py-3 font-medium text-slate-600">Usuario</th>
+              <th class="text-start px-4 py-3 font-medium text-slate-600">Nombre</th>
+              <th class="text-start px-4 py-3 font-medium text-slate-600">Apellido</th>
+              <th class="text-start px-4 py-3 font-medium text-slate-600">Rol</th>
+              <th class="text-start px-4 py-3 font-medium text-slate-600">Estado</th>
+              <th class="text-start px-4 py-3 font-medium text-slate-600">Creado</th>
+              <th class="text-end px-4 py-3 font-medium text-slate-600">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of users(); track u.id) {
+              <tr class="border-b border-slate-100 hover:bg-slate-50/50">
+                <td class="px-4 py-3 text-slate-700">{{ u.email }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ u.username }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ u.name || '-' }}</td>
+                <td class="px-4 py-3 text-slate-700">{{ u.surname || '-' }}</td>
+                <td class="px-4 py-3">
+                  <span [class]="u.role === 'ADMIN'
+                    ? 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent'
+                    : 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary'">
+                    {{ u.role === 'ADMIN' ? 'Admin' : 'Psicólogo' }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  @if (u.enabled) {
+                    <span class="inline-flex items-center gap-1 text-xs text-green-600">
+                      <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                      Activo
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 text-xs text-red-600">
+                      <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                      Inactivo
+                    </span>
+                  }
+                </td>
+                <td class="px-4 py-3 text-slate-500 text-xs">{{ u.createdAt | date:'dd/MM/yyyy' }}</td>
+                <td class="px-4 py-3 text-end">
+                  @if (confirmingId === u.id) {
+                    <span class="inline-flex items-center gap-2 text-xs text-slate-500">
+                      ¿Eliminar?
+                      <button (click)="doDelete(u.id)"
+                              class="px-2 py-1 rounded text-xs font-medium text-white bg-red-600 hover:bg-red-700 cursor-pointer">Sí</button>
+                      <button (click)="cancelDelete()"
+                              class="px-2 py-1 rounded text-xs font-medium text-slate-600 bg-slate-200 hover:bg-slate-300 cursor-pointer">No</button>
+                    </span>
+                  } @else {
+                    <div class="flex items-center justify-end gap-1">
+                      <button (click)="edit(u.id)"
+                              class="p-1.5 rounded-lg text-slate-400 hover:text-primary hover:bg-primary/5 transition-colors cursor-pointer"
+                              title="Editar">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button (click)="resetPassword(u.id)" [disabled]="resettingId === u.id"
+                              class="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer disabled:opacity-40"
+                              title="Restablecer contraseña">
+                        @if (resettingId === u.id) {
+                          <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                        } @else {
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                          </svg>
+                        }
+                      </button>
+                      <button (click)="confirmDelete(u.id)"
+                              class="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                              title="Eliminar">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="px-4 py-8 text-center text-sm text-slate-400">No hay usuarios</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

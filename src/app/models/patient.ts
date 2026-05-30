@@ -7,6 +7,12 @@ export interface PatientsRequestDTO {
   observation?: string;
 }
 
+export interface SessionData {
+  sessionDate: string;
+  sessionDateEnd: string;
+  pay: boolean;
+}
+
 export interface Patient {
   id: number;
   name: string;
@@ -16,6 +22,8 @@ export interface Patient {
   birthDay: string;
   cellPhone: string;
   genre: string;
+  observations: string[];
+  sessions?: SessionData[];
 }
 
 export interface PatientObservationsDTO {

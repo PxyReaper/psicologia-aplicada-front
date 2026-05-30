@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { map, Observable, tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { AuthRequest, AuthResponse, JwtPayload } from '../models/auth';
 
 @Injectable({ providedIn: 'root' })
@@ -38,6 +38,13 @@ export class AuthService {
   }
 
   logout(): void {
+    this.http.post(`${this.API_URL}/auth/logout`, {}).subscribe({
+      complete: () => this.clearSession(),
+      error: () => this.clearSession(),
+    });
+  }
+
+  private clearSession(): void {
     localStorage.removeItem(this.TOKEN_KEY);
     this.token.set(null);
     this.isAuthenticated.set(false);
@@ -61,7 +68,7 @@ export class AuthService {
     try {
       const payload = JSON.parse(atob(t.split('.')[1])) as JwtPayload;
       this.userEmail.set(payload.sub);
-      this.userRole.set(payload.role);
+      this.userRole.set(payload.role.replace(/^ROLE_/, ''));
     } catch {
       this.logout();
     }

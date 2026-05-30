@@ -37,15 +37,17 @@ bun run test       # ng test — Karma + Jasmine
 - Login con email y contraseña.
 - El token JWT se almacena en `localStorage` y se envía automáticamente en cada petición vía `authInterceptor`.
 - Protección de rutas con `authGuard` — redirige a `/login` si no hay token.
-- Registro de nuevos usuarios (ADMIN / PSYCHOLOGIST).
-- Cierre de sesión que limpia el token y redirige al login.
+- Registro de nuevos usuarios (ADMIN / PSYCHOLOGIST) — solo ADMIN.
+- Cierre de sesión que llama a `POST /api/auth/logout` para invalidar el token en backend, luego limpia el estado local y redirige al login.
+- El role del usuario se extrae del JWT y se almacena en `userRole` signal (sin prefijo `ROLE_`).
 
 ### 2. Gestión de Pacientes (`/patients`)
 
 - Listado paginado de pacientes con filtros por rango de fechas (alta/baja).
 - Búsqueda automática al cambiar las fechas.
 - Creación de nuevo paciente con datos personales (nombre, apellidos, fecha nacimiento, teléfono, género, observaciones).
-- Edición de paciente existente.
+- **Edición de paciente existente**: carga los datos del paciente (`GET /api/patients/{id}`) y las observaciones previas, que se muestran en una lista antes del textarea de nueva observación.
+- La columna "Obs." en el listado muestra la **última observación truncada** a 60 caracteres con `...` (con `title` para ver el texto completo al hover), en lugar del contador numérico.
 - Baja (discharge) de paciente con confirmación inline.
 
 ### 3. Gestión de Sesiones (`/sessions`)
@@ -61,7 +63,16 @@ bun run test       # ng test — Karma + Jasmine
 - Botón "Hoy" para volver a la semana actual.
 - Las sesiones se cargan con 7 peticiones paralelas (una por día) y un contador de generación para descartar respuestas obsoletas.
 
-### 4. Sistema de Notificaciones
+### 4. Gestión de Usuarios (`/users`) — solo ADMIN
+
+- Listado de todos los usuarios con tabla responsive: email, usuario, nombre, apellido, rol, estado, fecha de creación.
+- **Creación** de usuario: formulario con email, username, nombre, apellido, rol (ADMIN/PSYCHOLOGIST). La contraseña se auto-genera en el backend y se envía por email.
+- **Edición** de usuario: mismos campos + toggle de estado (activo/inactivo). Carga los datos del usuario por ID.
+- **Eliminación** con confirmación inline.
+- **Restablecer contraseña**: botón que genera una nueva contraseña aleatoria de 12 caracteres y la envía por email al usuario.
+- Protegido con `adminGuard` (solo ADMIN) y enlace en navbar visible únicamente para ADMIN.
+
+### 5. Sistema de Notificaciones
 
 - `ToastService` + `ToastContainer` para mostrar notificaciones toast en esquina superior derecha.
 - Mensajes de éxito/error al guardar, eliminar o realizar operaciones.
@@ -75,7 +86,8 @@ El frontend se conecta a un backend Java en `http://localhost:8080/api`.
 | Método | Ruta                    | Descripción                           |
 | ------ | ----------------------- | ------------------------------------- |
 | POST   | `/api/auth/login`       | Iniciar sesión → devuelve JWT         |
-| POST   | `/api/auth/register`    | Registrar nuevo usuario               |
+| POST   | `/api/auth/register`    | Registrar nuevo usuario (solo ADMIN)  |
+| POST   | `/api/auth/logout`      | Invalidar token (incrementa versión)  |
 
 ### Pacientes
 
@@ -84,6 +96,7 @@ El frontend se conecta a un backend Java en `http://localhost:8080/api`.
 | GET    | `/api/observations/patients`     | Lista pacientes activos (paginado, filtro por fechas) |
 | POST   | `/api/patients`                  | Crear nuevo paciente                     |
 | PUT    | `/api/patients/{id}`             | Actualizar paciente                      |
+| GET    | `/api/patients/{id}`             | Obtener paciente por ID (con observaciones) |
 | POST   | `/api/patients/{id}/discharge`   | Dar de baja un paciente                  |
 
 ### Sesiones
@@ -95,6 +108,16 @@ El frontend se conecta a un backend Java en `http://localhost:8080/api`.
 | PUT    | `/api/session/{id}`     | Actualizar sesión                        |
 | DELETE | `/api/session/{id}`     | Eliminar sesión                          |
 
+### Usuarios
+
+| Método | Ruta                             | Descripción                              |
+| ------ | -------------------------------- | ---------------------------------------- |
+| GET    | `/api/users`                     | Listar todos los usuarios (solo ADMIN)   |
+| GET    | `/api/users/{id}`                | Obtener usuario por ID (solo ADMIN)      |
+| PUT    | `/api/users/{id}`                | Actualizar usuario (solo ADMIN)          |
+| DELETE | `/api/users/{id}`                | Eliminar usuario (solo ADMIN)            |
+| POST   | `/api/users/{id}/reset-password` | Restablecer contraseña (solo ADMIN)      |
+
 ## Estructura del proyecto
 
 ```
@@ -102,6 +125,7 @@ src/
 ├── app/
 │   ├── auth/
 │   │   ├── auth.guard.ts           # Guard de autenticación (canActivate)
+│   │   ├── admin.guard.ts          # Guard de rol ADMIN (canActivate)
 │   │   ├── auth.interceptor.ts     # Interceptor HTTP: añade token JWT
 │   │   ├── auth.service.ts         # Servicio de autenticación (signals)
 │   │   └── login/
@@ -109,11 +133,16 @@ src/
 │   ├── models/
 │   │   ├── auth.ts                 # Interfaces de autenticación
 │   │   ├── patient.ts              # Interfaces de paciente
+│   │   ├── user.ts                 # Interfaces de usuario
 │   │   └── session.ts              # Interfaces de sesión
 │   ├── patients/
 │   │   ├── patients.service.ts     # Servicio de pacientes
 │   │   ├── patients-list/          # Listado de pacientes
 │   │   └── patient-form/           # Formulario de alta/edición
+│   ├── users/
+│   │   ├── users.service.ts        # Servicio de usuarios
+│   │   ├── users-list/             # Listado de usuarios (solo ADMIN)
+│   │   └── user-form/              # Formulario de alta/edición
 │   ├── sessions/
 │   │   ├── sessions.service.ts     # Servicio de sesiones
 │   │   └── sessions.ts             # Vista semanal con drag

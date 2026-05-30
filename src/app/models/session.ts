@@ -4,6 +4,7 @@ export interface SessionRequestDTO {
   observatory: string;
   observatorySummary: string;
   idPatient: number;
+  pay: boolean;
 }
 
 export interface SessionWithPatientDTO {

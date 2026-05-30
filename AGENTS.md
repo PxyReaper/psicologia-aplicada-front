@@ -23,6 +23,7 @@ Usar `bun` no `npm` (lockfile: `bun.lockb`).
 - **Confirmaciones**: Inline confirm (sin dependencias externas)
 - **API base URL**: `http://localhost:8080/api` (configurado en cada servicio)
 - **Estilo Google Calendar** en vista semanal: bloques de sesión con `border-l-2` + fondo semitransparente, nombre del paciente y horario `HH:MM - HH:MM`
+- **Roles**: dos roles (`ADMIN`, `PSYCHOLOGIST`) extraídos del JWT. El prefijo `ROLE_` se elimina al decodificar (`payload.role.replace(/^ROLE_/, '')`). `adminGuard` verifica `userRole() === 'ADMIN'`.
 
 ## Convenciones
 
@@ -95,11 +96,22 @@ colors: {
 - Listado con filtros por fecha de alta/baja
 - Confirmación inline para baja de paciente
 - Tabla responsive con `<table>` nativo
+- Columna "Obs." muestra la **última observación truncada** a 60 caracteres con `...` (método `observationPreview()`), con `[title]` para ver el texto completo al hover
 
 ### Patient Form (`src/app/patients/`)
 
 - Formulario con `<select>` nativo, `<input type="date">`, `<textarea>`
 - Creación y edición de pacientes
+- **Edición**: vía `effect()` que detecta `id()` input → llama a `GET /api/patients/{id}` → rellena los signals (`name`, `surname`, `birthDay`, `cellPhone`, `genre`, `existingObservations`). Las observaciones previas se muestran en una lista `<ul>` antes del textarea de nueva observación.
+- `PatientsService.getById(id)` añadido para obtener paciente individual con observaciones
+
+### Users (`src/app/users/`) — solo ADMIN
+
+- **Rutas**: `/users` con `canActivate: [authGuard, adminGuard]`. Enlace en navbar solo visible si `userRole() === 'ADMIN'`.
+- **UsersListComponent**: tabla con email, usuario, nombre, apellido, rol (badge color según ADMIN/PSYCHOLOGIST), estado (activo/inactivo con indicador), fecha de creación. Acciones: editar, restablecer contraseña (icono llave con spinner), eliminar (con confirmación inline).
+- **UserFormComponent**: crea (`POST /api/auth/register` — contraseña auto-generada por backend) o edita (`PUT /api/users/{id}`). En edición carga datos vía `GET /api/users/{id}` y muestra toggle de estado. El create tiene otro label en el toast ("se ha enviado un email con la contraseña").
+- **Reset password**: botón en acciones de la tabla → `POST /api/users/{id}/reset-password` → toast de confirmación. Backend genera password aleatorio de 12 caracteres y lo envía por email.
+- **UsersService**: métodos `getAll()`, `getById()`, `update()`, `delete()`, `create()` (usa `AuthService.register()`), `resetPassword()`.
 
 ### Login (`src/app/login/`)
 
@@ -112,6 +124,7 @@ colors: {
 - **`ToastService`** — servicio con signal interno para notificaciones toast
 - **`ToastContainer`** — componente que renderiza los toasts en esquina superior derecha
 - **`authInterceptor`** — añade `Authorization: Bearer <token>` y `Content-Type: application/json` a todas las requests
+- **`adminGuard`** — `CanActivateFn` que verifica `authService.userRole() === 'ADMIN'`. Redirige a `/patients` si no es ADMIN
 
 ## Decisiones técnicas
 
@@ -126,4 +139,7 @@ colors: {
 | `sessionsByDay` computed | Reduce complejidad de O(n·días) a O(n) en el template |
 | `showNav` basado en `NavigationEnd.url` | El navbar no desaparece antes de completar la navegación al logout |
 | Rutas de pacientes como `children` con `canActivate` en el padre | Evita que `path: 'patients'` (prefix) intercepte `patients/new` y `patients/:id/edit` |
+| `effect()` en PatientFormComponent para cargar datos | Reactivo al cambio de `id()` input sin necesidad de `ngOnInit` |
+| `.replace(/^ROLE_/, '')` al decodificar JWT | El backend guarda `ROLE_ADMIN` en el claim `role`; el frontend usa `ADMIN` sin prefijo |
+| `logout()` llama a `POST /api/auth/logout` antes de limpiar sesión | Invalida el token en backend (incrementa tokenVersion); la limpieza local ocurre en ambos casos (éxito/error) |
 | SVG inline en lugar de PrimeIcons | Elimina dependencia externa |

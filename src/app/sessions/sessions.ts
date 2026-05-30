@@ -45,6 +45,7 @@ export class SessionsComponent {
   selectedPatientId = signal<number | null>(null);
   observatory = signal('');
   observatorySummary = signal('');
+  pay = signal(false);
   saving = signal(false);
   showDeleteConfirm = signal(false);
 
@@ -266,6 +267,7 @@ export class SessionsComponent {
     this.selectedPatientId.set(s.session.patientId);
     this.observatory.set(s.session.observation);
     this.observatorySummary.set(s.session.observationSummary);
+    this.pay.set(s.session.pay);
     this.showDialog.set(true);
   }
 
@@ -295,6 +297,7 @@ export class SessionsComponent {
       observatory: this.observatory(),
       observatorySummary: this.observatorySummary(),
       idPatient: this.selectedPatientId()!,
+      pay: this.pay(),
     };
     this.saving.set(true);
     const request = this.editingSession()
@@ -440,6 +443,7 @@ export class SessionsComponent {
       observatory: sds.session.observation,
       observatorySummary: sds.session.observationSummary,
       idPatient: sds.session.patientId,
+      pay: sds.session.pay,
     };
 
     this.saving.set(true);
@@ -469,6 +473,7 @@ export class SessionsComponent {
     this.selectedPatientId.set(null);
     this.observatory.set('');
     this.observatorySummary.set('');
+    this.pay.set(false);
     this.showDialog.set(true);
   }
 }

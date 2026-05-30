@@ -34,8 +34,18 @@
           }
         </select>
       </div>
+      @if (isEdit() && existingObservations().length > 0) {
+        <div class="md:col-span-2 flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-slate-700">Observaciones anteriores</label>
+          <ul class="text-sm text-slate-600 bg-slate-50 rounded-lg border border-slate-200 divide-y divide-slate-200">
+            @for (obs of existingObservations(); track $index) {
+              <li class="px-3 py-2">{{ obs }}</li>
+            }
+          </ul>
+        </div>
+      }
       <div class="md:col-span-2 flex flex-col gap-1.5">
-        <label class="text-sm font-medium text-slate-700">Observación inicial</label>
+        <label class="text-sm font-medium text-slate-700">{{ isEdit() ? 'Nueva observación' : 'Observación inicial' }}</label>
         <textarea [(ngModel)]="observation" rows="3" placeholder="Observación"
                   class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none"></textarea>
       </div>

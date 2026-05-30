@@ -1,0 +1,75 @@
+<app-toast-container />
+<div class="flex justify-center p-4 md:p-6">
+  <div class="w-full max-w-2xl bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8">
+    <h1 class="text-lg font-bold text-slate-800 mb-6">{{ isEdit() ? 'Editar Usuario' : 'Nuevo Usuario' }}</h1>
+
+    @if (loading() && isEdit()) {
+      <div class="flex justify-center py-8">
+        <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-slate-700">Email *</label>
+          <input [(ngModel)]="email" placeholder="Email"
+                 class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-slate-700">Usuario *</label>
+          <input [(ngModel)]="username" placeholder="Usuario"
+                 class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-slate-700">Nombre</label>
+          <input [(ngModel)]="name" placeholder="Nombre"
+                 class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-slate-700">Apellido</label>
+          <input [(ngModel)]="surname" placeholder="Apellido"
+                 class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-medium text-slate-700">Rol *</label>
+          <select [(ngModel)]="role"
+                  class="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+            <option value="" disabled>Seleccionar</option>
+            @for (r of roles; track r.value) {
+              <option [value]="r.value">{{ r.label }}</option>
+            }
+          </select>
+        </div>
+        @if (isEdit()) {
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-slate-700">Estado</label>
+            <label class="flex items-center gap-2 cursor-pointer mt-1">
+              <input type="checkbox" [ngModel]="enabled()" (ngModelChange)="enabled.set($event)"
+                     class="rounded border-slate-300 text-primary focus:ring-primary/30 cursor-pointer" />
+              <span class="text-sm text-slate-600">{{ enabled() ? 'Activo' : 'Inactivo' }}</span>
+            </label>
+          </div>
+        }
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <button (click)="cancel()"
+                class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer">
+          Cancelar
+        </button>
+        <button (click)="save()" [disabled]="loading()"
+                class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:bg-primary-light disabled:opacity-60 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center gap-2">
+          @if (loading()) {
+            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          }
+          Guardar
+        </button>
+      </div>
+    }
+  </div>
+</div>

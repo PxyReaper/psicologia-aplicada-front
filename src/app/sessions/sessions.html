@@ -194,6 +194,12 @@
           <textarea [(ngModel)]="observatorySummary" rows="2"
                     class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none"></textarea>
         </div>
+
+        <div class="flex items-center gap-2">
+          <input type="checkbox" [ngModel]="pay()" (ngModelChange)="pay.set($event)" id="session-pay"
+                 class="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30 cursor-pointer" />
+          <label for="session-pay" class="text-sm font-medium text-slate-700 cursor-pointer select-none">Pagada</label>
+        </div>
       </div>
 
       <!-- Delete confirm -->

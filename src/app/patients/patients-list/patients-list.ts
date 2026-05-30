@@ -45,6 +45,10 @@ export class PatientsListComponent {
     });
   }
 
+  detail(id: number): void {
+    this.router.navigate(['/patients', id]);
+  }
+
   edit(id: number): void {
     this.router.navigate(['/patients', id, 'edit']);
   }
@@ -66,6 +70,13 @@ export class PatientsListComponent {
       },
       error: () => this.toast.error('Error al dar de baja'),
     });
+  }
+
+  observationPreview(obs: string[], max = 60): string {
+    if (!obs || obs.length === 0) return '-';
+    const last = obs[obs.length - 1];
+    if (last.length <= max) return last;
+    return last.slice(0, max) + '...';
   }
 
   private toDateInputValue(d: Date): string {

@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { PatientObservationsDTO, PatientsRequestDTO } from '../models/patient';
+import { Patient, PatientObservationsDTO, PatientsRequestDTO } from '../models/patient';
 
 @Injectable({ providedIn: 'root' })
 export class PatientsService {
@@ -16,6 +16,10 @@ export class PatientsService {
       .set('page', page)
       .set('size', size);
     return this.http.get<any>(`${this.API}/observations/patients`, { params });
+  }
+
+  getById(id: number): Observable<Patient> {
+    return this.http.get<Patient>(`${this.API}/patients/${id}`);
   }
 
   create(data: PatientsRequestDTO): Observable<void> {
