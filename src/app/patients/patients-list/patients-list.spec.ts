@@ -50,7 +50,7 @@ describe('PatientsListComponent', () => {
 
   it('should confirm discharge and execute it', () => {
     const mockPatient = {
-      patient: { id: 1, name: 'Ana', surname: 'López', startDate: '2026-01-01', endDate: null, birthDay: '1990-01-01', cellPhone: '600123456', genre: 'femenino' },
+      patient: { id: 1, name: 'Ana', surname: 'López', startDate: '2026-01-01', endDate: null, birthDay: '1990-01-01', cellPhone: '600123456', genre: 'femenino', observations: [] },
       observations: [],
     };
 

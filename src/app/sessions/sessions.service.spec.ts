@@ -47,6 +47,7 @@ describe('SessionsService', () => {
       observatory: '',
       observatorySummary: '',
       idPatient: 1,
+      pay: false,
     };
 
     service.create(dto).subscribe();
@@ -64,6 +65,7 @@ describe('SessionsService', () => {
       observatory: '',
       observatorySummary: '',
       idPatient: 1,
+      pay: false,
     };
 
     service.update(1, dto).subscribe();
