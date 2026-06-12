@@ -23,7 +23,7 @@ export class UsersListComponent {
   users = signal<UserResponse[]>([]);
   loading = signal(false);
   confirmingId: number | null = null;
-  resettingId: number | null = null;
+  resettingId = signal<number | null>(null);
 
   constructor() {
     this.loadUsers();
@@ -67,14 +67,14 @@ export class UsersListComponent {
   }
 
   resetPassword(id: number): void {
-    this.resettingId = id;
+    this.resettingId.set(id);
     this.usersService.resetPassword(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.resettingId = null;
+        this.resettingId.set(null);
         this.toast.success('Nueva contraseña enviada por email');
       },
       error: () => {
-        this.resettingId = null;
+        this.resettingId.set(null);
         this.toast.error('Error al restablecer la contraseña');
       },
     });

@@ -13,6 +13,7 @@ const END_HOUR = 23;
   selector: 'app-session-week-grid',
   imports: [SessionBlock],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block h-full' },
   template: `
     <div class="flex flex-col h-full">
       <!-- Week Header -->
